@@ -7,4 +7,5 @@ Code by Stephanie Eckman
 
 R code runs simualtions and outputs to Stata data set
 
-Stata code makes graphs in paper
+Stata code processes sim results, calculates the numbers in the chapter, and creates the graphs.
+
