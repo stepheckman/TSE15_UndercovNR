@@ -5,18 +5,18 @@
 
 # rm(list=ls())
 
-setwd("C:\\Users\\stephnie\\Dropbox\\papers\\TSE15 Nonresponse Undercoverage\\simulations\\")
+#setwd("z:\\R")
+#install.packages(c("MASS","sampling","doBy","foreign"), repos = "http://cran.us.r-project.org")
 
 require(MASS)
 require(sampling)
 require(doBy)
 require(foreign)
 
-set.seed(20150215)
-
+set.seed(20150409)
 popobs <- 1000000
-sampobs <- 1000
-sims <- 1000
+sampobs <- 2000
+sims <- 5000
 
 # make pop data frame
 pop.fn <- function(corr, cpincrease, bx, bz, gx, gz) {
@@ -29,7 +29,8 @@ pop.fn <- function(corr, cpincrease, bx, bz, gx, gz) {
   
   # draw X,Z from multivar normal
   sigma <- matrix(c(1, corr, corr, 1), nrow=2, ncol=2)
-  dt <- data.frame(mvrnorm(n = popobs, c(0,0), sigma))
+  x <- rnorm(n = popobs, 0, 1)
+  dt <- as.data.frame(cbind(x,x))
   names(dt) <- c("x", "z")
   
   # make CPs and RP
@@ -43,7 +44,7 @@ pop.fn <- function(corr, cpincrease, bx, bz, gx, gz) {
   dt
 }
 
-# select samples and aggregate over them
+
 samp.fn <- function(popdata) {
   # corr -- correlation between CPa, CPb (correlation in continuous variables)
   # cpincrease -- how much CPs increase in survey B compared to survey A
@@ -74,11 +75,11 @@ samp.fn <- function(popdata) {
     # delete y when not covered or nonresponder
     samp$ya <- samp$y
     samp$ya[samp$cova == 0] <- NA    # ya should be missing if not covered
-    samp$ya[samp$respa == 0] <- NA    # ya should be missing if nonresponder
+    samp$ya[samp$respa == 0] <- NA   # ya should be missing if nonresponder
     
     samp$yb <- samp$y
     samp$yb[samp$covb == 0] <- NA    # ya should be missing if not covered
-    samp$yb[samp$respb == 0] <- NA    # ya should be missing if nonresponder
+    samp$yb[samp$respb == 0] <- NA   # ya should be missing if nonresponder
     
     samp.corr <- cor(samp,use="pairwise.complete.obs")
     
@@ -87,11 +88,13 @@ samp.fn <- function(popdata) {
                                 samp.corr[13,3],samp.corr[14,4],samp.corr[13,5],samp.corr[14,5]))
   }
   
+  # take average accross all the simulations for this parameter combo
   sapply(samp.results, mean)
 }     
 
-# create population according to parameters and send to sample.fn
-# return results for this pop
+
+
+
 sim.fn <- function(ps) {
   # make population according to these settings
   popdt <- pop.fn(ps[1,1], ps[1,2], ps[1,3],ps[1,4],ps[1,5],ps[1,6])
@@ -102,7 +105,7 @@ sim.fn <- function(ps) {
 }
 
 
-# set up list of all possible combos of parameters
+
 i <- 1
 p <- list()
 
@@ -112,8 +115,9 @@ p <- list()
 # p4: bz -- coeff on Z in reg to create Y
 # p5: gx -- coeff on X in reg to create CP
 # p6: gz -- coeff on Z in reg to create RP
-for (p1 in c(0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1)) {
-  for (p2 in seq(1,10, by = 1)) {
+
+for (p1 in c(0)) {
+  for (p2 in c(1,4,10)) {
     for (p3 in c(-2,-.2,.2,2)) {
       for (p4 in c(-2,-.2,.2,2))  {
         for (p5 in c(.2,2))  {
@@ -129,21 +133,18 @@ for (p1 in c(0, .1, .2, .3, .4, .5, .6, .7, .8, .9, 1)) {
   }
 }
 
-# apply sim.fn to list of all parameter combos
-# returns results matrix for all combox
 results <- sapply(p, FUN=sim.fn)
 
-# make results matrix pretty
-results <- as.data.frame(t(results))
-names(results) <- c("p1","p2","p3","p4","p5","p6", "y.mean",
-                        "cova.mean","covb.mean","respa.mean","respb.mean","ya.mean","yb.mean",
-                        "corr_cpa_y","corr_cpb_y","corr_rpa_y","corr_rpb_y",                 
-                        "corr_cpa_rpa","corr_cpb_rpa","corr_cpa_cpb")
+results.dt <- as.data.frame(t(results))
 
+names(results.dt) <- c("p1","p2","p3","p4","p5","p6", "y.mean",
+                     "cova.mean","covb.mean","respa.mean","respb.mean","ya.mean","yb.mean",
+                     "corr_cpa_y","corr_cpb_y","corr_rpa_y","corr_rpb_y",                 
+                     "corr_cpa_rpa","corr_cpb_rpa","corr_cpa_cpb")
 
 
 # save results data frame, as R and Stata
-save(results, file="results11.Rdata")
-write.dta(results, file="results11.dta")
+save(results.dt, file="results_final.Rdata")
+write.dta(results.dt, file="results_final.dta")
 
-save.image(file="sims11.RData")
+save.image(file="sims_final")
