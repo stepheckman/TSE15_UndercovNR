@@ -29,8 +29,7 @@ pop.fn <- function(corr, cpincrease, bx, bz, gx, gz) {
   
   # draw X,Z from multivar normal
   sigma <- matrix(c(1, corr, corr, 1), nrow=2, ncol=2)
-  x <- rnorm(n = popobs, 0, 1)
-  dt <- as.data.frame(cbind(x,x))
+  dt <- data.frame(mvrnorm(n = popobs, c(0,0), sigma))
   names(dt) <- c("x", "z")
   
   # make CPs and RP
