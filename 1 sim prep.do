@@ -1,6 +1,5 @@
 
-
-* output by R code in same folder
+* output by R code in repository
 use "$sim\results_rev4.dta", replace
 
 gen simid = _n
